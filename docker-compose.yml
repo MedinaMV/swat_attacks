@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+
+  redis: 
+   image: redis:7.0.11-alpine
+
+  django:
+    container_name: django
+    build: 
+      context: ./swat_attacks
+    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes: 
+      - ./swat_attacks:/usr/src/app/
+    ports: 
+      - 9000:8000
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=90sdf7g09s7hg9shs9fhg07dfs9
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+    depends_on:
+      - redis
+
+  celery:
+    container_name: celery
+    build: 
+      context: ./swat_attacks
+    command: celery --app=swat_attacks worker -l INFO
+    volumes: 
+      - ./swat_attacks:/usr/src/app/
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=90sdf7g09s7hg9shs9fhg07dfs9
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+    depends_on:
+      - redis
