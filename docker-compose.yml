@@ -25,7 +25,7 @@ services:
     container_name: celery
     build: 
       context: ./swat_attacks
-    command: celery --app=swat_attacks worker -l INFO
+    command: celery --app=swat_attacks worker -l INFO -Q celery,celery:1,celery:2,celery:3
     volumes: 
       - ./swat_attacks:/usr/src/app/
     environment:
@@ -34,3 +34,4 @@ services:
       - ALLOWED_HOSTS=localhost,127.0.0.1
     depends_on:
       - redis
+      - django
