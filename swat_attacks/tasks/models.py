@@ -1,6 +1,11 @@
 from django.db import models
 
-# Create your models here.
-class task(models.Model):
-    type = models.CharField(max_length=4)
-    done = models.CharField(max_length=1)
+class Post(models.Model):
+    target = models.CharField(max_length=100)
+    attack_type = models.DecimalField()
+    state = models.DecimalField()
+    owner = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.title
+

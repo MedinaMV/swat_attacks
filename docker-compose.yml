@@ -18,6 +18,8 @@ services:
       - DEBUG=1
       - SECRET_KEY=90sdf7g09s7hg9shs9fhg07dfs9
       - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DB_NAME=TFG
+      - DB_STRING=mongodb+srv://Alejandro:SbIEtGVpLWF4quno@notion.fdplx7g.mongodb.net/
     depends_on:
       - redis
 
@@ -32,6 +34,8 @@ services:
       - DEBUG=1
       - SECRET_KEY=90sdf7g09s7hg9shs9fhg07dfs9
       - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DB_NAME=TFG
+      - DB_STRING=mongodb+srv://Alejandro:SbIEtGVpLWF4quno@notion.fdplx7g.mongodb.net/
     depends_on:
       - redis
       - django
