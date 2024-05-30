@@ -65,10 +65,15 @@ WSGI_APPLICATION = 'swat_attacks.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': os.environ.get("DB_NAME"),
+        'ENFORCE_SCHEMA': False,  # Opcional, permite saltarse la validación de esquemas en MongoDB
+        'CLIENT': {
+            'host': os.environ.get("DB_STRING"),
+        }
     }
 }
+
 
 
 # Password validation
