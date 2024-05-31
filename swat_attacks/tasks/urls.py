@@ -1,4 +1,3 @@
-from . import views
 from rest_framework import routers
 from .api import ProjectViewSet, ProjectViewSet1
 

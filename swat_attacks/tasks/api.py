@@ -15,7 +15,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
 
         # Llama al método personalizado para la segunda ruta
-        xss.delay(serializer.instance)
+        xss.delay(request.data)
 
         return Response(status=status.HTTP_201_CREATED)
    
