@@ -18,11 +18,10 @@ def xss_task(subdomain, payloads):
         if vulnerable:
             return subdomain,reflection
 
-def xss_scanner(url_objetive):
-
+def xss_scanner(url_objetive, instance_id):
     output_file = '/usr/src/app/tasks/files/subdomains.txt'
-
     result = subprocess.run(['katana', '-u', url_objetive, '-o', output_file], capture_output=True, text=True)
+    scanner_result = []
 
     if result.returncode == 0:
         subdomains = [line.rstrip() for line in open('/usr/src/app/tasks/files/subdomains.txt','r')]
@@ -37,8 +36,13 @@ def xss_scanner(url_objetive):
             for future in concurrent.futures.as_completed(futures):
                 subdomain = futures[future]
                 try:
-                    print(future.result())
+                    task = future.result()
+                    if task:
+                        print(future.result())
+                        scanner_result.append(task)
                 except Exception as e:
                     print(f"An error occurred while processing {subdomain}: {e}")
     else:
-        print(f"Error al ejecutar `katana`: {result.stderr}")
+        print(f"Error executing `katana`: {result.stderr}")
+        
+    return scanner_result

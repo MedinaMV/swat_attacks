@@ -3,7 +3,7 @@ from celery import Celery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'swat_attacks.settings')
 
-app = Celery('swat_attacks')
+app = Celery('swat_attacks',backend='redis://redis:6379/0')
 app.config_from_object("django.conf:settings", namespace="CELERY")
 # app.conf.task_routes = {'tasks.tasks.task1': {'queue':'queue1'}, 'tasks.tasks.task2': {'queue':'queue2'}}
 

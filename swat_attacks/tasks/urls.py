@@ -1,9 +1,8 @@
 from rest_framework import routers
-from .api import ProjectViewSet, ProjectViewSet1
+from .api import ProjectViewSet
 
 router = routers.DefaultRouter()
 
-router.register('api/xss', ProjectViewSet, 'xss')
-router.register('api/sqli', ProjectViewSet1, 'sqli')
+router.register('api/attack', ProjectViewSet, 'attack')
 
 urlpatterns = router.urls
