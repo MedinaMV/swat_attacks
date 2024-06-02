@@ -1,6 +1,6 @@
 import threading
 import time
-from .models import Attack
+from .models import Attack, Generic_Result
 from bson import ObjectId
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
@@ -10,7 +10,7 @@ from celery.result import AsyncResult
 from datetime import datetime
 import pytz
 
-def update_element(instance_id, state, flag):
+def update_attack(instance_id, state, flag):
    attack = Attack.objects.get(_id=ObjectId(instance_id))
    attack.state = state
    if flag:
@@ -24,14 +24,14 @@ def wait_for_tasks(threads):
 def wait_for_task(task_id, instance_id, task_name, result_lock, completed_tasks, cont):
     result = AsyncResult(task_id)
     while not result.ready():
-        time.sleep(1)  
+        time.sleep(60)  
 
     print(f'Task {task_name} with ID {task_id} finished. Result: {result.result}')
 
     with result_lock:
         completed_tasks.append(task_name)
         if len(completed_tasks) == cont:
-            update_element(instance_id, 'COMPLETED', True)
+            update_attack(instance_id,'COMPLETED',True)
             print(f'Updated attack {instance_id} state to completed')
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -53,14 +53,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
       for i in data['attack_type']:
          if i == 'XSS':
             task = xss.delay(data, instance_id)
-            update_element(instance_id,'EXECUTING',False)
+            update_attack(instance_id,'EXECUTING',False)
             threads.append(threading.Thread(target=wait_for_task, args=(task.id, instance_id, 'xss', result_lock, completed_tasks, cont)).start())
 
          if i == 'SQLI':
             task1 = sqli.delay(data, instance_id)
-            update_element(instance_id,'EXECUTING',False)
+            update_attack(instance_id,'EXECUTING',False)
             threads.append(threading.Thread(target=wait_for_task, args=(task1.id, instance_id, 'sqli', result_lock, completed_tasks, cont)).start())
 
       threading.Thread(target=wait_for_tasks, args=(threads,)).start()
       return Response(status=status.HTTP_201_CREATED)
+   
    
