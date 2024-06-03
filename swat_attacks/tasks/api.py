@@ -1,11 +1,11 @@
 import threading
 import time
-from .models import Attack, Generic_Result
+from .models import Attack
 from bson import ObjectId
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from .serializers import ProjectSerializer
-from .tasks import xss, sqli
+from .tasks import generic_attack
 from celery.result import AsyncResult
 from datetime import datetime
 import pytz
@@ -51,15 +51,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
       result_lock = threading.Lock()
       completed_tasks = []
       for i in data['attack_type']:
-         if i == 'XSS':
-            task = xss.delay(data, instance_id)
-            update_attack(instance_id,'EXECUTING',False)
-            threads.append(threading.Thread(target=wait_for_task, args=(task.id, instance_id, 'xss', result_lock, completed_tasks, cont)).start())
-
+         type = 'xss'
          if i == 'SQLI':
-            task1 = sqli.delay(data, instance_id)
-            update_attack(instance_id,'EXECUTING',False)
-            threads.append(threading.Thread(target=wait_for_task, args=(task1.id, instance_id, 'sqli', result_lock, completed_tasks, cont)).start())
+            type = 'sqli'
+
+         task = generic_attack.delay(data,instance_id,type)
+         update_attack(instance_id,'EXECUTING',False)
+         threads.append(threading.Thread(target=wait_for_task, args=(task.id, instance_id, type, result_lock, completed_tasks, cont)).start())
 
       threading.Thread(target=wait_for_tasks, args=(threads,)).start()
       return Response(status=status.HTTP_201_CREATED)

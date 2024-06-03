@@ -1,8 +1,5 @@
 from celery import shared_task
-import time
-import pytz
-from datetime import datetime
-from .attacks import xss_scanner
+from .attacks import scanner
 from .models import Generic_Result
 
 def create_generic_result(data,level,attack_id):
@@ -14,13 +11,8 @@ def create_generic_result(data,level,attack_id):
     return generic_result
 
 @shared_task
-def xss(data,id,queue='celery'):
-    result = xss_scanner(data['target'],id)
+def generic_attack(data,id,type,queue='celery'):
+    result = scanner(data['target'],type)
+    #print(result)
     create_generic_result(result,'HIGH',id)
     return 
-
-@shared_task
-def sqli(url,id,queue='celery:1'):
-    time.sleep(5)
-    print('SQLI ATTACK COMPLETED')
-    return
