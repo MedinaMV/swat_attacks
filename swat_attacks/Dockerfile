@@ -32,8 +32,14 @@ RUN pip install -r requirements.txt
 # Install Katana
 RUN go install github.com/projectdiscovery/katana/cmd/katana@latest
 
+# Install Nuclei
+RUN go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+
 # Move Katana binary to a directory in PATH
 RUN mv /root/go/bin/katana /usr/local/bin/katana
+
+# Move Nuclei binary to a directory in PATH
+RUN mv /root/go/bin/nuclei /usr/local/bin/nuclei
 
 # Copy entrypoint script and make it executable
 COPY ./entrypoint.sh /usr/src/app/entrypoint.sh

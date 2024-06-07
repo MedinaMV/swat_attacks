@@ -5,7 +5,7 @@ from bson import ObjectId
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from .serializers import ProjectSerializer
-from .tasks import generic_attack
+from .tasks import generic_attack,bruteforce_attack,nuclei_attack
 from celery.result import AsyncResult
 from datetime import datetime
 import pytz
@@ -51,11 +51,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
       result_lock = threading.Lock()
       completed_tasks = []
       for i in data['attack_type']:
-         type = 'xss'
-         if i == 'SQLI':
-            type = 'sqli'
-
-         task = generic_attack.delay(data,instance_id,type)
+         type = i.lower()
+            
+         if type == 'xss' or type == 'sqli':
+            task = generic_attack.delay(data,instance_id,type)
+         elif type == 'brf':
+            task = bruteforce_attack.delay(data,instance_id)
+         else:
+            task = nuclei_attack.delay(data,instance_id)
+            
          update_attack(instance_id,'EXECUTING',False)
          threads.append(threading.Thread(target=wait_for_task, args=(task.id, instance_id, type, result_lock, completed_tasks, cont)).start())
 

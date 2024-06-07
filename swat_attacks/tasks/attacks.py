@@ -9,6 +9,7 @@ URL_SUBDOMAINS = f'/usr/src/app/tasks/files/subdomains.txt'
 URL_XSS_PAYLOADS = f'/usr/src/app/tasks/files/xss_payload.txt'
 URL_SQLI_PAYLOADS = f'/usr/src/app/tasks/files/sqli_payload.txt'
 URL_PASSWORDS = f'/usr/src/app/tasks/files/rock.txt'
+URL_NUCLEI = f'/usr/src/app/tasks/files/nuclei_results.txt'
 
 def generic_attack(subdomain: str, payloads: list):
     for payload in payloads:
@@ -41,8 +42,7 @@ def execute(method, payloads, subdomains):
     return scanner_result
 
 def scanner(url_objetive,type):
-    output_file = URL_SUBDOMAINS
-    result = subprocess.run(['katana', '-u', url_objetive, '-o', output_file], capture_output=True, text=True)
+    result = subprocess.run(['katana', '-u', url_objetive, '-o', URL_SUBDOMAINS], capture_output=True, text=True)
     results = []
 
     if result.returncode == 0:
@@ -71,23 +71,32 @@ def bruteforce_type1(url,username_type,password_type):
             
     return cont > 5
 
-def bruteforce_type2(url,username,username_type,password_type,cookie_value):
-	result = ''
-	passwords = [line.rstrip() for line in open(URL_PASSWORDS,'r')]
-	base_page = requests.get(url).content
-	for password in passwords:
-		try:
-			data = {username_type:username,password_type:password}
-			if cookie_value != '':
-				response = requests.get(url, params=data, cookies = {'Cookie': cookie_value})
-			else:
-				response = requests.post(url, data=data)
-			if base_page == response.content:
-				pass
-			else:
-				result = password
-				break
-		except requests.exceptions.HTTPError as err:
-			print(f'HTTP error occurred: {err}')
+def bruteforce_type2(url,username,username_type,password_type):
+    result = ''
+    passwords = [line.rstrip() for line in open(URL_PASSWORDS,'r')]
+    base_page = requests.get(url).content
+    for password in passwords:
+        try:
+            data = {username_type:username,password_type:password}
+            response = requests.post(url, data=data)
+            if base_page != response.content:
+                result = password
+                break
+        except requests.exceptions.HTTPError as err:
+            print(f'HTTP error ocurred: {err}')
+    return result
 
-	return result
+def nuclei_attacks(url):
+    result = subprocess.run(['nuclei', '-u', url, '-o', URL_NUCLEI], capture_output=True, text=True)
+    nuclei_results = []
+
+    if result.returncode == 0:
+        vulnerabilities = [line.rstrip() for line in open(URL_NUCLEI,'r')]
+        filter_lines = [line for line in vulnerabilities if not line.startswith('[INF]')]
+        nuclei = [line.replace('[', '').replace(']', '') for line in filter_lines]
+        nuclei_results = [{'vulnerability': element} for element in nuclei]
+
+    else:
+        print(f"Error executing `nuclei`: {result.stderr}")
+
+    return nuclei_results
