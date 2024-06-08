@@ -1,6 +1,8 @@
 import subprocess
 import requests
 import concurrent.futures
+from http.cookies import SimpleCookie
+import re
 
 # https://aicouncil.in
 # http://testphp.vulnweb.com/
@@ -100,3 +102,57 @@ def nuclei_attacks(url):
         print(f"Error executing `nuclei`: {result.stderr}")
 
     return nuclei_results
+
+def session_attacks(url,username,password,username_type,password_type):
+    data = {username_type:username,password_type:password}
+    response = requests.post(url, data=data)
+    cookies = obtain_cookies(response)
+    result = {}
+    for cookie in response.cookies:
+        result['Name'] = cookie.name 
+        result['Value'] = secure_value(cookie.name)
+        result['Expires'] = cookie.expires != None
+        result['HttpOnly'] = has_http_only(cookie)
+        result['Secure'] = cookie.secure
+        result['SameSite'] = cookie.get_nonstandard_attr('SameSite') != None
+
+    for cookie in cookies:
+        result['HostOnly'] = cookie['hostonly']
+    return result
+
+def obtain_cookies(response):
+    cookie_header = response.headers.get('Set-Cookie')
+    if not cookie_header:
+        return []
+
+    simple_cookie = SimpleCookie()
+    simple_cookie.load(cookie_header)
+
+    cookies = []
+    for key, morsel in simple_cookie.items():
+        cookie = {
+            'domain': morsel['domain']
+        }
+        cookie['hostonly'] = not bool(cookie['domain'])
+        cookies.append(cookie)
+    return cookies
+    
+def secure_value(valor):
+    if len(valor) <= 20:
+        return False
+
+    if not re.match(r'^[A-Za-z0-9\.\-_]+$', valor):
+        return False
+
+    if '%' in valor or '/' in valor:
+        return False
+
+    return True
+
+def has_http_only(cookie):
+    extra_args = cookie.__dict__.get('_rest')
+    if extra_args:
+        for key in extra_args.keys():
+            if key.lower() == 'httponly':
+                return True
+    return False

@@ -72,3 +72,16 @@ class Nuclei_Result(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = models.DjongoManager()
+
+class Session_Result(models.Model):
+    _id = models.ObjectIdField(primary_key=True, default=ObjectId, editable=False)
+    value_field = models.BooleanField(max_length=10)
+    expire_field = models.BooleanField(max_length=10)
+    httponly_field = models.BooleanField(max_length=10)
+    hostonly_field = models.BooleanField(max_length=10)
+    secure_field = models.BooleanField(max_length=10)
+    samesite_field = models.BooleanField(max_length=10)
+    attack_id = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = models.DjongoManager()

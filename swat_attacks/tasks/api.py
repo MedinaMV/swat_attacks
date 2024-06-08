@@ -5,7 +5,7 @@ from bson import ObjectId
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from .serializers import ProjectSerializer
-from .tasks import generic_attack,bruteforce_attack,nuclei_attack
+from .tasks import generic_attack,bruteforce_attack,nuclei_attack,session_attack
 from celery.result import AsyncResult
 from datetime import datetime
 import pytz
@@ -57,8 +57,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             task = generic_attack.delay(data,instance_id,type)
          elif type == 'brf':
             task = bruteforce_attack.delay(data,instance_id)
-         else:
+         elif type == 'nuc':
             task = nuclei_attack.delay(data,instance_id)
+         else:
+            task = session_attack.delay(data,instance_id)
             
          update_attack(instance_id,'EXECUTING',False)
          threads.append(threading.Thread(target=wait_for_task, args=(task.id, instance_id, type, result_lock, completed_tasks, cont)).start())
