@@ -6,6 +6,8 @@ class Attack(models.Model):
     _id = models.ObjectIdField(primary_key=True, default=ObjectId, editable=False)
     target = models.CharField(max_length=100)
     attack_type = models.JSONField()
+    method = models.CharField(max_length=5)
+    body = models.CharField(max_length=100)
     state = models.CharField(max_length=20)
     owner = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -29,6 +31,7 @@ class ResultForm(forms.ModelForm):
 class Generic_Result(models.Model): 
     _id = models.ObjectIdField(primary_key=True, default=ObjectId, editable=False)
     name = models.CharField(max_length=10)
+    info = models.CharField(max_length=30)
     results = models.ArrayField(
         model_container=Result,
         model_form_class=ResultForm
@@ -46,6 +49,7 @@ class Bruteforce_Result(models.Model):
     username = models.CharField(max_length=80)
     password = models.CharField(max_length=50)
     level = models.CharField(max_length=20)
+    info = models.CharField(max_length=30, default='Bruteforce Attack')
     attack_id = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -68,6 +72,7 @@ class Nuclei_Result(models.Model):
         model_container=Nuclei,
         model_form_class=NucleiForm
     )
+    info = models.CharField(max_length=30, default='Nuclei Templates')
     attack_id = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -81,6 +86,7 @@ class Session_Result(models.Model):
     hostonly_field = models.BooleanField(max_length=10)
     secure_field = models.BooleanField(max_length=10)
     samesite_field = models.BooleanField(max_length=10)
+    info = models.CharField(max_length=30, default='Session Attack')
     attack_id = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 

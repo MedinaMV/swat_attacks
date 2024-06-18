@@ -38,11 +38,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
    queryset = Attack.objects.all()
    permission_classes = [permissions.AllowAny]
    serializer_class = ProjectSerializer
+   instanceId = ''
    
    def create(self, request, *args, **kwargs):
       serializer = self.get_serializer(data=request.data)
       serializer.is_valid(raise_exception=True)
       self.perform_create(serializer)
+      instanceId = str(serializer.instance._id)
 
       instance_id = str(serializer.instance._id)
       data = request.data
@@ -66,6 +68,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
          threads.append(threading.Thread(target=wait_for_task, args=(task.id, instance_id, type, result_lock, completed_tasks, cont)).start())
 
       threading.Thread(target=wait_for_tasks, args=(threads,)).start()
-      return Response(status=status.HTTP_201_CREATED)
+      return Response(status=status.HTTP_201_CREATED, data=instanceId)
    
    

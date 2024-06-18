@@ -41,25 +41,29 @@ def create_session_result(data,id):
 
 @shared_task
 def generic_attack(data,id,type,queue='celery'):
-    result = scanner(data['target'],type)
-    create_generic_result(result,'HIGH',id)
+    print(data)
+    '''result = scanner(data['target'],type)
+    create_generic_result(result,'H',id)'''
     return 
 
 @shared_task
 def bruteforce_attack(data,id,queue='celery:1'):
-    ddos = bruteforce_type1(data['bruteforce']['url'],data['bruteforce']['username_type'],data['bruteforce']['password_type'])
+    print(data)
+    '''ddos = bruteforce_type1(data['bruteforce']['url'],data['bruteforce']['username_type'],data['bruteforce']['password_type'])
     result = bruteforce_type2(data['bruteforce']['url'],data['bruteforce']['username'],data['bruteforce']['username_type'],data['bruteforce']['password_type'])
-    create_bruteforce_result(ddos,data['bruteforce']['username'],result,'MEDIUM',id)
+    create_bruteforce_result(ddos,data['bruteforce']['username'],result,'M',id)'''
     return 
 
 @shared_task
 def nuclei_attack(data,id,queue='celery:2'):
-    result = nuclei_attacks(data['target'])
-    create_nuclei_result(result,id)
+    print(data)
+    '''result = nuclei_attacks(data['target'])
+    create_nuclei_result(result,id)'''
     return
 
 @shared_task
 def session_attack(data,id,queue='celery:3'):
-    result = session_attacks(data['session']['url'],data['session']['username'],data['session']['password'],data['session']['username_type'],data['session']['password_type'])
-    create_session_result(result,id)
+    print(data)
+    '''result = session_attacks(data['session']['url'],data['session']['username'],data['session']['password'],data['session']['username_type'],data['session']['password_type'])
+    create_session_result(result,id)'''
     return
