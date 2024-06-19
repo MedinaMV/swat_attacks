@@ -1,12 +1,21 @@
 from celery import shared_task
 from .attacks import scanner,bruteforce_type1,bruteforce_type2,nuclei_attacks,session_attacks
 from .models import Generic_Result,Bruteforce_Result,Nuclei_Result,Session_Result
+import json
 
-def create_generic_result(data,level,attack_id):
+def create_generic_result(data,level,attack_id,type):
     generic_result = Generic_Result()
-    generic_result.level = level
+    
     generic_result.attack_id = attack_id
     generic_result.results = [{'url': url, 'payload': payload} for url, payload in data]
+    if type == 'xss':
+        generic_result.info = 'Cross-Site Scripting (XSS)'
+        generic_result.name = 'XSS'
+        generic_result.level = 'M'
+    else:
+        generic_result.info = 'SQL Injection'
+        generic_result.name = 'SQLI'
+        generic_result.level = 'H'
     generic_result.save()
     return generic_result
 
@@ -41,29 +50,26 @@ def create_session_result(data,id):
 
 @shared_task
 def generic_attack(data,id,type,queue='celery'):
-    print(data)
-    '''result = scanner(data['target'],type)
-    create_generic_result(result,'H',id)'''
+    result = scanner(data['target'],type)
+    create_generic_result(result,'H',id,type)
     return 
 
 @shared_task
 def bruteforce_attack(data,id,queue='celery:1'):
-    print(data)
-    '''ddos = bruteforce_type1(data['bruteforce']['url'],data['bruteforce']['username_type'],data['bruteforce']['password_type'])
-    result = bruteforce_type2(data['bruteforce']['url'],data['bruteforce']['username'],data['bruteforce']['username_type'],data['bruteforce']['password_type'])
-    create_bruteforce_result(ddos,data['bruteforce']['username'],result,'M',id)'''
+    body = json.loads(data['body'])
+    ddos = bruteforce_type1(data['target'],data['endpoint'],data['method'],data['body'])
+    result = bruteforce_type2(data['target'],data['endpoint'],data['method'],data['body'])
+    create_bruteforce_result(ddos,body[next(iter(body))],result,'C',id)
     return 
 
 @shared_task
 def nuclei_attack(data,id,queue='celery:2'):
-    print(data)
-    '''result = nuclei_attacks(data['target'])
-    create_nuclei_result(result,id)'''
+    result = nuclei_attacks(data['target'])
+    create_nuclei_result(result,id)
     return
 
 @shared_task
 def session_attack(data,id,queue='celery:3'):
-    print(data)
-    '''result = session_attacks(data['session']['url'],data['session']['username'],data['session']['password'],data['session']['username_type'],data['session']['password_type'])
-    create_session_result(result,id)'''
+    result = session_attacks(data['target'],data['endpoint'],data['method'],data['body'])
+    create_session_result(result,id)
     return

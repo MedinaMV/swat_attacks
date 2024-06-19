@@ -3,6 +3,7 @@ import requests
 import concurrent.futures
 from http.cookies import SimpleCookie
 import re
+import json
 
 # https://aicouncil.in
 # http://testphp.vulnweb.com/
@@ -61,26 +62,40 @@ def scanner(url_objetive,type):
         print(f"Error executing `katana`: {result.stderr}")
     return results
 
-def bruteforce_type1(url,username_type,password_type):
+def bruteforce_type1(url,endpoint,method,data):
+    body = json.loads(data)
     cont = 0
-    data = {username_type:'admin',password_type:'password'}
     for i in range(0,10):
         try:
-            requests.post(url, data=data)
+            if method == 'POST':
+                requests.post(url+endpoint, data=body)
+            else:
+                requests.put(url+endpoint, data=body)
             cont = i
         except requests.exceptions.HTTPError as err:
             print(f'HTTP error occurred: {err}')
-            
     return cont > 5
 
-def bruteforce_type2(url,username,username_type,password_type):
+def bruteforce_type2(url,endpoint,method,data):
+    body = json.loads(data)
     result = ''
+    base_page = ''
+    keys = list(body.keys())
+    first_key = keys[0]
+    second_key = keys[1]
     passwords = [line.rstrip() for line in open(URL_PASSWORDS,'r')]
-    base_page = requests.get(url).content
+    if method == 'POST':
+        base_page = requests.post(url+endpoint, data={first_key:body[first_key],second_key:"password"}).content
+    else:
+        base_page = requests.put(url+endpoint, data={first_key:body[first_key],second_key:"password"}).content
     for password in passwords:
+        body_with_password = {first_key:body[first_key],second_key:password}
+        print(body_with_password)
         try:
-            data = {username_type:username,password_type:password}
-            response = requests.post(url, data=data)
+            if method == 'POST':
+                response = requests.post(url+endpoint, data=body_with_password)
+            else:
+                response = requests.put(url+endpoint, data=body_with_password)
             if base_page != response.content:
                 result = password
                 break
@@ -103,9 +118,12 @@ def nuclei_attacks(url):
 
     return nuclei_results
 
-def session_attacks(url,username,password,username_type,password_type):
-    data = {username_type:username,password_type:password}
-    response = requests.post(url, data=data)
+def session_attacks(url,endpoint,method,data):
+    body = json.loads(data)
+    if method == 'POST':
+        response = requests.post(url+endpoint, data=body)
+    else:
+        response = requests.put(url+endpoint, data=body)
     cookies = obtain_cookies(response)
     result = {}
     for cookie in response.cookies:
